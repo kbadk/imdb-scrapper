@@ -43,13 +43,14 @@ const BASE_URL = "https://www.imdb.com";
  * scrapper - the function to get meta data about movie or tvshow
  *
  * @param {type} id The id of movie or tv show
+ * @param {obj} headers Headers object to be passed to requset
  *
  * @returns {Promise<Object>} the keys are
  * title,runtime,year,story,writers|writer,producer|producers,
  * director|directors,genre,poster,episodes,seasons,related
  */
-function scrapper(id) {
-  return request(`${BASE_URL}/title/${id}/?ref_=nv_sr_1`)
+function scrapper(id, headers) {
+  return request(`${BASE_URL}/title/${id}/?ref_=nv_sr_1`, headers)
     .then(data => {
       const $ = cheerio.load(data);
 
@@ -73,11 +74,12 @@ function scrapper(id) {
  * awardsPage - get top three awards won by the movies
  *
  * @param {type} id id of the movie
- *
+ * @param {obj} headers Headers object to be passed to requset
+ * *
  * @returns {Promise<Array>} array contains object
  */
-function awardsPage(id) {
-  return request(`${BASE_URL}/title/${id}/awards?ref_=tt_awd`)
+function awardsPage(id, headers) {
+  return request(`${BASE_URL}/title/${id}/awards?ref_=tt_awd`, headers)
     .then(data => {
       const $ = cheerio.load(data);
       return [getWinner(4, $), getWinner(7, $), getWinner(10, $)];
@@ -90,11 +92,12 @@ function awardsPage(id) {
  *
  * @param {String}   id         the id of movie or tv show
  * @param {number} [season=1] Description
- *
+ * @param {obj} headers Headers object to be passed to requset
+
  * @returns {Promise<Array>} array contains the object
  */
-function episodesPage(id, season = 1) {
-  return request(`https://www.imdb.com/title/${id}/episodes?season=${season}`)
+function episodesPage(id, season = 1, headers) {
+  return request(`https://www.imdb.com/title/${id}/episodes?season=${season}`, headers)
     .then(data => {
       const $ = cheerio.load(data);
       return { ...getEpisodes($) };
@@ -106,13 +109,15 @@ function episodesPage(id, season = 1) {
  * getStarsByBornDay - the function provide the days stars were borned
  *
  * @param {object} [date={}] the date which born stars are required
+ * @param {obj} headers Headers object to be passed to requset
  *
  * @returns {Promise<Array>} the array contains the object
  */
-function getStarsByBornDay(date = new Date()) {
+function getStarsByBornDay(date = new Date(), headers) {
   const monthday = getMonthDay(date);
   return request(
-    `${BASE_URL}/search/name?birth_monthday=${monthday}&refine=birth_monthday&ref_=nv_cel_brn`
+    `${BASE_URL}/search/name?birth_monthday=${monthday}&refine=birth_monthday&ref_=nv_cel_brn`,
+    headers
   )
     .then(data => {
       const $ = cheerio.load(data);
@@ -124,21 +129,24 @@ function getStarsByBornDay(date = new Date()) {
 /**
  * getStarsBornToday - get stars born today
  *
+ * @param {obj} headers Headers object to be passed to requset
+ *
  * @returns {Promise<Array>} array contains the object
  */
-function getStarsBornToday() {
-  return getStarsByBornDay(Date.now());
+function getStarsBornToday(headers) {
+  return getStarsByBornDay(Date.now(), headers);
 }
 
 /**
  * getFull - get all the details of a particular movie
  *
  * @param {type} id the id movie or the tv show
+ * @param {obj} headers Headers object to be passed to requset
  *
  * @returns {Promise<object>}
  */
-function getFull(id) {
-  return Promise.all([scrapper(id), awardsPage(id), getCast(id)])
+function getFull(id, headers) {
+  return Promise.all([scrapper(id, headers), awardsPage(id, headers), getCast(id, headers)])
     .then(data => {
       return { ...data[0], awards: data[1], ...data[2] };
     })
@@ -149,11 +157,12 @@ function getFull(id) {
  * getActor - get actor detail
  *
  * @param {type} id of the actor
+ * @param {obj} headers Headers object to be passed to requset
  *
  * @returns {Promise<Array>} the array contains the object
  */
-function getActor(id) {
-  return request(`https://www.imdb.com/name/${id}/?ref_=tt_cl_t1`)
+function getActor(id, headers) {
+  return request(`https://www.imdb.com/name/${id}/?ref_=tt_cl_t1`, headers)
     .then(data => {
       const $ = cheerio.load(data);
       return getActorData($);
